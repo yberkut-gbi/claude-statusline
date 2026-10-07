@@ -22,7 +22,15 @@ Claude Code runs the status line through Git Bash when it is installed, so this 
 2. Install jq: `winget install jqlang.jq`, then restart the terminal.
 3. In Git Bash: `bash install.sh`.
 
-Without Git Bash, Claude Code falls back to PowerShell, and this script will not run.
+### Windows 11, PowerShell only (no Git Bash, no jq)
+
+Use the PowerShell version in `windows/`. In PowerShell, from the repo folder:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File windows\install.ps1
+```
+
+It installs `statusline.ps1` and `statusline-toggle.ps1` into `~/.claude`, the same two commands, and a `statusLine` setting that runs the script through `powershell`. Use only one install (bash or PowerShell); the last one wins.
 
 ### What install does
 
