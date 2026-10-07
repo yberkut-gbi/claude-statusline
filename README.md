@@ -1,6 +1,6 @@
 # claude-statusline
 
-A compact status line for [Claude Code](https://claude.com/claude-code). Works on macOS, Linux and Windows with no extra installs.
+A compact status line for [Claude Code](https://claude.com/claude-code). One script for macOS, Linux and Windows. Needs only Node.js (no packages).
 
 ```
 Opus 5.5 (medium) | ctx: 86.9k/500k (17%) | session: ↑74 ↓14.8k ⛁ 2.26M/194.2k 54:10 ($2.10) | main
@@ -13,39 +13,32 @@ Run `/statusline-help` inside Claude Code for what each part means.
 ```sh
 git clone https://github.com/yberkut-gbi/claude-statusline.git
 cd claude-statusline
+node install.js
 ```
 
-| System | Command | Uses |
-|---|---|---|
-| macOS / Linux | `sh install.sh` | `sh`, `grep`, `sed`, `awk` |
-| Windows | `powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1` | Windows PowerShell 5.1+ |
+It copies `statusline.js` to `~/.claude/`, adds two commands to `~/.claude/commands/`, and sets `statusLine` in `~/.claude/settings.json`. It saves a backup of `settings.json` first. Run it again to update.
 
 `git` is optional; without it the branch is not shown.
-
-The installer copies the script to `~/.claude/`, adds the two commands to `~/.claude/commands/`, and sets `statusLine` in `~/.claude/settings.json`. It saves a backup of `settings.json` first.
 
 ## Commands
 
 - `/statusline-help` — explains each part of the line.
 - `/statusline-toggle` — hides or shows the line.
 
+## Uninstall
+
+```sh
+node install.js --uninstall
+```
+
+It removes the script, the two commands, and the `statusLine` setting (only if it still points to this script). It saves a backup of `settings.json` first.
+
 ## Layout
 
 ```
-src/statusline.sh      the status line, macOS / Linux
-src/statusline.ps1     the status line, Windows (same output)
-commands/              Claude Code commands, shared by both systems
-install.sh, install.ps1        install / update (--uninstall / -Uninstall to remove)
-uninstall.sh, uninstall.ps1    shortcuts for the above
+src/statusline.js   the status line (--toggle to show/hide)
+commands/           Claude Code commands; {{TOGGLE_COMMAND}} is filled in by the installer
+install.js          install / update (--uninstall to remove)
 ```
 
 The line refreshes every second (`refreshInterval: 1`) so the cache timer counts down. Raise it in `settings.json` if that feels heavy.
-
-## Uninstall
-
-| System | Command |
-|---|---|
-| macOS / Linux | `sh uninstall.sh` |
-| Windows | `powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1` |
-
-It removes the script, the two commands, and the `statusLine` setting (only if it still points to this script). It saves a backup of `settings.json` first.
