@@ -76,3 +76,7 @@ src/statusline.js   the status line (--toggle to show/hide)
 commands/           Claude Code commands; the installer fills in {{TOGGLE_COMMAND}}
 package.json        makes it runnable with npx
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
