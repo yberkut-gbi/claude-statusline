@@ -6,7 +6,7 @@ input=$(cat)
 [ -f "$HOME/.claude/statusline.off" ] && exit 0
 command -v jq >/dev/null 2>&1 || { echo "jq missing"; exit 0; }
 
-j() { printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null; }
+j() { printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null | tr -d '\r'; }
 kfmt() { awk -v s="$1" 'BEGIN{ if (s>=1000000) printf "%gM", int(s/10000)/100; else if (s>=1000) printf "%gk", int(s/100)/10; else printf "%d", s }'; }
 
 model=$(j '.model.display_name')
@@ -40,7 +40,7 @@ if [ -n "$tp" ] && [ -f "$tp" ]; then
     | [ (map(.input_tokens // 0) | add // 0),
         (map(.output_tokens // 0) | add // 0),
         (map(.cache_read_input_tokens // 0) | add // 0),
-        (map(.cache_creation_input_tokens // 0) | add // 0) ] | @tsv' "$tp" 2>/dev/null)
+        (map(.cache_creation_input_tokens // 0) | add // 0) ] | @tsv' "$tp" 2>/dev/null | tr -d '\r')
 fi
 sess=""
 [ -n "$t_in" ] && sess="↑$(kfmt "$t_in") ↓$(kfmt "$t_out") ⛁ $(kfmt "$t_cr")/$(kfmt "$t_cw")"

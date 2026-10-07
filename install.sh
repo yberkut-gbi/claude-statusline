@@ -17,7 +17,7 @@ cp "$here"/commands/*.md "$dest/commands/"
 [ -f "$settings" ] || echo '{}' > "$settings"
 cp "$settings" "$settings.bak.$(date +%Y%m%d%H%M%S)"
 tmp="$settings.tmp.$$"
-jq --arg cmd "bash $dest/statusline.sh" \
+jq --arg cmd "bash ~/.claude/statusline.sh" \
   '.statusLine = {type: "command", command: $cmd, refreshInterval: 1}' \
   "$settings" > "$tmp" && mv "$tmp" "$settings"
 

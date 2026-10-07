@@ -14,6 +14,18 @@ Needs `bash` and `jq`.
 bash install.sh
 ```
 
+### Windows 11
+
+Claude Code runs the status line through Git Bash when it is installed, so this works there too:
+
+1. Install [Git for Windows](https://git-scm.com/download/win) (gives Git Bash).
+2. Install jq: `winget install jqlang.jq`, then restart the terminal.
+3. In Git Bash: `bash install.sh`.
+
+Without Git Bash, Claude Code falls back to PowerShell, and this script will not run.
+
+### What install does
+
 It copies `statusline.sh` and the commands into `~/.claude`, and sets `statusLine` in `~/.claude/settings.json` (a backup is saved next to it).
 
 ## Use
