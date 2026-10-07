@@ -1,12 +1,29 @@
 # claude-statusline
 
-A compact status line for [Claude Code](https://claude.com/claude-code). One script for macOS, Linux and Windows. Needs only Node.js (no packages).
+A compact status line for [Claude Code](https://claude.com/claude-code). One script for macOS, Linux and Windows.
 
 ```
 Opus 5.5 (medium) | ctx: 86.9k/500k (17%) | session: ↑74 ↓14.8k ⛁ 2.26M/194.2k 54:10 ($2.10) | main
 ```
 
-Run `/statusline-help` inside Claude Code for what each part means.
+## What it shows
+
+| Part | Meaning |
+|---|---|
+| `Opus 5.5 (medium)` | Model and effort level |
+| `ctx: 86.9k/500k (17%)` | Context used now / window size (percent). Matches `/context`. |
+| `↑74 ↓14.8k` | Session totals: fresh input tokens, output tokens |
+| `⛁ 2.26M/194.2k` | Session totals: cache read / cache write tokens |
+| `54:10` | Time left before the prompt cache expires (`cold` once it has) |
+| `($2.10)` | Estimated session cost in USD |
+| `main` | Current git branch |
+
+Inside Claude Code, run `/statusline-help` for the full explanation (for example, why cache read can be bigger than the context window).
+
+## Requirements
+
+- [Node.js](https://nodejs.org) 18 or newer, on your `PATH`. No npm packages.
+- `git` (optional). Without it, the branch is not shown.
 
 ## Install
 
@@ -16,14 +33,34 @@ cd claude-statusline
 node install.js
 ```
 
-It copies `statusline.js` to `~/.claude/`, adds two commands to `~/.claude/commands/`, and sets `statusLine` in `~/.claude/settings.json`. It saves a backup of `settings.json` first. Run it again to update.
+Then send a message in Claude Code to see the line.
 
-`git` is optional; without it the branch is not shown.
+The installer:
+- copies `statusline.js` to `~/.claude/`
+- adds `/statusline-help` and `/statusline-toggle` to `~/.claude/commands/`
+- sets `statusLine` in `~/.claude/settings.json` (a backup is saved first)
+
+To update, run `git pull` and `node install.js` again.
 
 ## Commands
 
-- `/statusline-help` — explains each part of the line.
-- `/statusline-toggle` — hides or shows the line.
+| Command | What it does |
+|---|---|
+| `/statusline-help` | Explains each part of the line |
+| `/statusline-toggle` | Hides or shows the line |
+
+Plan and spend limits are not in the line. Use Claude Code's built-in `/usage` for those.
+
+## Settings
+
+- **Refresh rate:** the line refreshes every second so the cache timer counts down. To refresh less often, change `refreshInterval` in `~/.claude/settings.json`.
+- **Context window:** if `CLAUDE_CODE_AUTO_COMPACT_WINDOW` is set, the line uses it as the window size, the same as `/context`.
+
+## Troubleshooting
+
+- **No line shows:** run `node --version` in a new terminal. If it fails, install Node.js or add it to your `PATH`.
+- **Line shows only `Claude`:** Claude Code sent no data yet. Send a message.
+- **Line is hidden:** run `/statusline-toggle`.
 
 ## Uninstall
 
@@ -31,14 +68,12 @@ It copies `statusline.js` to `~/.claude/`, adds two commands to `~/.claude/comma
 node install.js --uninstall
 ```
 
-It removes the script, the two commands, and the `statusLine` setting (only if it still points to this script). It saves a backup of `settings.json` first.
+It removes the script, the two commands, and the `statusLine` setting (only if it still points to this script). A backup of `settings.json` is saved first.
 
-## Layout
+## Repository layout
 
 ```
 src/statusline.js   the status line (--toggle to show/hide)
-commands/           Claude Code commands; {{TOGGLE_COMMAND}} is filled in by the installer
+commands/           Claude Code commands; the installer fills in {{TOGGLE_COMMAND}}
 install.js          install / update (--uninstall to remove)
 ```
-
-The line refreshes every second (`refreshInterval: 1`) so the cache timer counts down. Raise it in `settings.json` if that feels heavy.
