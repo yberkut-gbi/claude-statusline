@@ -1,14 +1,22 @@
-# Claude Code status line (PowerShell version, for Windows without Git Bash).
+# Claude Code status line for Windows. Uses only built-in Windows PowerShell 5.1+ (git optional).
 #   model (effort) | ctx: used/window (%) | session: in out cache read/write mm:ss ($cost) | branch
-# Hide it with /statusline-toggle (creates ~/.claude/statusline.off).
-# Works in Windows PowerShell 5.1 and PowerShell 7. Non-ASCII symbols are built from code points
-# so the file can be saved without a BOM.
+# Keep in sync with statusline.sh (macOS / Linux).
+#   statusline.ps1           read Claude Code's JSON on stdin, print the line
+#   statusline.ps1 -Toggle   show/hide the line
+# Non-ASCII symbols are built from code points so the file needs no BOM.
+param([switch]$Toggle)
 
 $ErrorActionPreference = 'SilentlyContinue'
+$off = Join-Path $HOME '.claude/statusline.off'
+if ($Toggle) {
+    if (Test-Path $off) { Remove-Item $off; 'Status line: shown' }
+    else { New-Item -ItemType File -Path $off -Force | Out-Null; 'Status line: hidden' }
+    exit 0
+}
+
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
 $raw = [Console]::In.ReadToEnd()
-
-if (Test-Path (Join-Path $HOME '.claude/statusline.off')) { exit 0 }
+if (Test-Path $off) { exit 0 }
 
 $inv = [Globalization.CultureInfo]::InvariantCulture
 $UP = [char]0x2191; $DOWN = [char]0x2193; $CACHE = [char]0x26C1
@@ -27,7 +35,7 @@ function Num([regex]$re, [string]$text) {
 }
 
 try { $d = $raw | ConvertFrom-Json } catch { $d = $null }
-if (-not $d) { Write-Output 'Claude'; exit 0 }
+if (-not $d) { 'Claude'; exit 0 }
 
 $out = if ($d.model.display_name) { $d.model.display_name } else { 'Claude' }
 if ($d.effort.level) { $out += " ($($d.effort.level))" }
@@ -37,11 +45,10 @@ $cw = $d.context_window
 $win = if ($cw.context_window_size) { [double]$cw.context_window_size } else { $null }
 $acw = $env:CLAUDE_CODE_AUTO_COMPACT_WINDOW
 if ($acw -and ((-not $win) -or ([double]$acw -lt $win))) { $win = [double]$acw }
-if ($cw.total_input_tokens -ne $null -and $win) {
+if ($null -ne $cw.total_input_tokens -and $win) {
     $tok = [double]$cw.total_input_tokens
-    $pct = [Math]::Round($tok * 100 / $win)
-    $out += " | ctx: $(KFmt $tok)/$(KFmt $win) ($pct%)"
-} elseif ($cw.used_percentage -ne $null) {
+    $out += " | ctx: $(KFmt $tok)/$(KFmt $win) ($([Math]::Round($tok * 100 / $win))%)"
+} elseif ($null -ne $cw.used_percentage) {
     $out += " | ctx: $([Math]::Round([double]$cw.used_percentage))%"
 }
 
@@ -57,13 +64,12 @@ if ($tp -and (Test-Path -LiteralPath $tp)) {
     $reCr = [regex]'"cache_read_input_tokens":(\d+)'
     $reCw = [regex]'"cache_creation_input_tokens":(\d+)'
     foreach ($line in [IO.File]::ReadLines($tp)) {
-        if ($line.IndexOf('"usage"') -lt 0) { continue }
+        $at = $line.IndexOf('"usage"')
+        if ($at -lt 0) { continue }
         $m = $reId.Match($line)
         if (-not $m.Success) { continue }
-        $u = $line.Substring($line.IndexOf('"usage"'))
-        $byId[$m.Groups[1].Value] = @(
-            (Num $reIn $u), (Num $reOut $u), (Num $reCr $u), (Num $reCw $u)
-        )
+        $u = $line.Substring($at)
+        $byId[$m.Groups[1].Value] = @((Num $reIn $u), (Num $reOut $u), (Num $reCr $u), (Num $reCw $u))
     }
     if ($byId.Count -gt 0) {
         $t = @(0, 0, 0, 0)
@@ -76,9 +82,9 @@ if ($tp -and (Test-Path -LiteralPath $tp)) {
 if ($d.prompt_cache.expires_at) {
     $left = [long][Math]::Floor([double]$d.prompt_cache.expires_at) - [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
     $timer = if ($left -gt 0) { '{0}:{1:00}' -f [Math]::Floor($left / 60), ($left % 60) } else { 'cold' }
-    $sess = ("$sess $timer").Trim()
+    $sess = "$sess $timer".Trim()
 }
-if ($d.cost.total_cost_usd -ne $null) {
+if ($null -ne $d.cost.total_cost_usd) {
     $sess = ("$sess (`$" + ([double]$d.cost.total_cost_usd).ToString('0.00', $inv) + ')').Trim()
 }
 if ($sess) { $out += " | session: $sess" }
@@ -91,4 +97,4 @@ if ($cwd -and (Test-Path -LiteralPath $cwd) -and (Get-Command git -ErrorAction S
     if ($branch) { $out += " | $branch" }
 }
 
-Write-Output $out
+$out
