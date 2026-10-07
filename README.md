@@ -28,19 +28,17 @@ Inside Claude Code, run `/statusline-help` for the full explanation (for example
 ## Install
 
 ```sh
-git clone https://github.com/yberkut-gbi/claude-statusline.git
-cd claude-statusline
-node install.js
+npx github:yberkut-gbi/claude-statusline install
 ```
 
-Then send a message in Claude Code to see the line.
+No clone needed. Then send a message in Claude Code to see the line.
 
 The installer:
 - copies `statusline.js` to `~/.claude/`
 - adds `/statusline-help` and `/statusline-toggle` to `~/.claude/commands/`
 - sets `statusLine` in `~/.claude/settings.json` (a backup is saved first)
 
-To update, run `git pull` and `node install.js` again.
+To update, run the same command again.
 
 ## Commands
 
@@ -65,7 +63,7 @@ Plan and spend limits are not in the line. Use Claude Code's built-in `/usage` f
 ## Uninstall
 
 ```sh
-node install.js --uninstall
+npx github:yberkut-gbi/claude-statusline uninstall
 ```
 
 It removes the script, the two commands, and the `statusLine` setting (only if it still points to this script). A backup of `settings.json` is saved first.
@@ -73,7 +71,8 @@ It removes the script, the two commands, and the `statusLine` setting (only if i
 ## Repository layout
 
 ```
+bin/cli.js          the installer: install | uninstall
 src/statusline.js   the status line (--toggle to show/hide)
 commands/           Claude Code commands; the installer fills in {{TOGGLE_COMMAND}}
-install.js          install / update (--uninstall to remove)
+package.json        makes it runnable with npx
 ```
