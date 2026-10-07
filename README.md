@@ -35,11 +35,17 @@ The installer copies the script to `~/.claude/`, adds the two commands to `~/.cl
 src/statusline.sh      the status line, macOS / Linux
 src/statusline.ps1     the status line, Windows (same output)
 commands/              Claude Code commands, shared by both systems
-install.sh, install.ps1
+install.sh, install.ps1        install / update (--uninstall / -Uninstall to remove)
+uninstall.sh, uninstall.ps1    shortcuts for the above
 ```
 
 The line refreshes every second (`refreshInterval: 1`) so the cache timer counts down. Raise it in `settings.json` if that feels heavy.
 
 ## Uninstall
 
-Remove the `statusLine` key from `~/.claude/settings.json`, then delete `~/.claude/statusline.sh` (or `statusline.ps1`), `~/.claude/statusline.off` if present, and `~/.claude/commands/statusline-help.md` and `statusline-toggle.md`.
+| System | Command |
+|---|---|
+| macOS / Linux | `sh uninstall.sh` |
+| Windows | `powershell -NoProfile -ExecutionPolicy Bypass -File uninstall.ps1` |
+
+It removes the script, the two commands, and the `statusLine` setting (only if it still points to this script). It saves a backup of `settings.json` first.
