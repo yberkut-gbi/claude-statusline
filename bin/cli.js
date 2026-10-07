@@ -22,6 +22,7 @@ const cmds = path.join(dest, 'commands');
 const settingsFile = path.join(dest, 'settings.json');
 // Forward slashes: on Windows, Claude Code may run commands through Git Bash, which eats backslashes.
 const run = `node "${path.join(dest, 'statusline.js').replace(/\\/g, '/')}"`;
+const offFile = path.join(dest, 'statusline.off').replace(/\\/g, '/');
 const ours = (sl) => /statusline\.(js|sh|ps1)/.test(sl?.command || '');
 
 // Apply change(settings) to settings.json. A backup is kept next to the file.
@@ -43,14 +44,31 @@ function install() {
   const toggle = fs.readFileSync(path.join(pkg, 'commands', 'statusline-toggle.md'), 'utf8')
     .replace('{{TOGGLE_COMMAND}}', `${run} --toggle`);
   fs.writeFileSync(path.join(cmds, 'statusline-toggle.md'), toggle);
-  editSettings((s) => { s.statusLine = { type: 'command', command: run, refreshInterval: 1 }; });
+  editSettings((s) => {
+    s.statusLine = { type: 'command', command: run, refreshInterval: 1 };
+    // /statusline-toggle runs in the Bash sandbox, which blocks writes to ~/.claude by default.
+    const fsSettings = ((s.sandbox ??= {}).filesystem ??= {});
+    const allow = (fsSettings.allowWrite ??= []);
+    if (!allow.includes(offFile)) allow.push(offFile);
+  });
   console.log('Installed. Send a message in Claude Code to see the status line.');
   console.log('Commands: /statusline-help, /statusline-toggle');
 }
 
 function uninstall() {
   // Remove "statusLine" only if it still runs this script.
-  if (fs.existsSync(settingsFile)) editSettings((s) => { if (ours(s.statusLine)) delete s.statusLine; });
+  if (fs.existsSync(settingsFile)) {
+    editSettings((s) => {
+      if (ours(s.statusLine)) delete s.statusLine;
+      const fsSettings = s.sandbox?.filesystem;
+      if (fsSettings?.allowWrite) {
+        fsSettings.allowWrite = fsSettings.allowWrite.filter((p) => p !== offFile);
+        if (!fsSettings.allowWrite.length) delete fsSettings.allowWrite;
+        if (!Object.keys(fsSettings).length) delete s.sandbox.filesystem;
+        if (!Object.keys(s.sandbox).length) delete s.sandbox;
+      }
+    });
+  }
   for (const f of ['statusline.js', 'statusline.off', 'commands/statusline-help.md', 'commands/statusline-toggle.md']) {
     fs.rmSync(path.join(dest, f), { force: true });
   }
